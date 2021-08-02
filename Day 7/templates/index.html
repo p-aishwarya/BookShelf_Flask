@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    </head>
+
+    <body>
+        {%if flag%}
+        <h1><a href="{{url_for('register')}}">{{uname}}</a></h1>
+        <h1><a href="{{url_for('logout')}}">logout</a></h1>
+
+        {%else%}
+        <h1><a href="{{url_for('register')}}">Register</a></h1>
+        <h1><a href="{{url_for('register')}}">Login</a></h1>
+
+        {%endif%}
+    </body>
+
+    <form class="example" action="{{url_for('register')}}" method='POST'>
+        <input type="text" placeholder="Search.." name="search">
+        <button type="submit"><i class="fa fa-search"></i></button>
+        </form>
+
+</html>
