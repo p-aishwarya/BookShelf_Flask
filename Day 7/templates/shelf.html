@@ -67,40 +67,30 @@ body {
   <a href="{{ url_for('login') }}">Login</a>
   <a href="{{ url_for('register') }}">Register</a>
   {% else %}
-  <a href="{{ url_for('home') }}" class="right">{{user}}</a>
+  <a href="#" class="right">{{user}}</a>
   <a href="{{ url_for('shelfpage') }}" class="right">Shelf</a>
   <a href="{{ url_for('logout') }}" class="right">Logout</a>
   {% endif %}
 </div>
-<form class="main" action = "{{ url_for('book') }}" method="POST">    
-    <input type="text" name = "bookvalue" placeholder="Search.."style="width: 1000px; height: 50px ;margin-left: 50%;margin-right: 10%;"> 
-    <button type="submit" class = "btn btn-info" id = "bookbutton">submit</button> 
-</form>
-<table class="table table-hover table-striped" style="width: 75%; margin: auto;">
-    <thead class="thead-dark">
-      <tr>
-        <th scope="col">Isbn</th>
-        <th scope="col">Title</th>
-        <th scope="col">Author</th>
-        <th scope="col">Year</th>
-      </tr>
-    </thead>
-    <tbody>
-    
-      {%for book in books%}
-      <tr>
-        <th scope="row"><a href="{{ url_for('get_book_details',id = book.id)}}" target="_blank">{{book.id}}</a>
-        </th>
-        <td>{{book.title}}</td>
-        <td>{{book.author}}</td>
-        <td>{{book.year}}</td>
-      </tr>
-      {%endfor%}
-     
-    </tbody>
-  </table>
-<div class="footer">
-  <h2>Footer</h2>
+<div style="margin-top: 2%;">
+    <div class="card-deck">
+        {%for each in books%}
+          {%for book in each%}
+            <div class="card">
+              <div class="card-body">
+                <div class="card-header">
+                  <h5 class="card-title"><a href="{{ url_for('get_book_details',id = book.id)}}" target="_blank">{{book.id}}</a></h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item">{{book.title}}</li>
+                  <li class="list-group-item">{{book.author}}</li>
+                  <li class="list-group-item">{{book.year}}</li>
+                </ul>
+              </div>
+            </div>
+            {%endfor%}
+        {%endfor%}
+      </div>
 </div>
 </body>
 </html>

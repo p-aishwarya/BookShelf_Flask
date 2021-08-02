@@ -1,7 +1,6 @@
+from flask import Flask, render_template,request
 from flask.globals import session
-from models import Users
-from flask import Flask, render_template, request
-from flask.helpers import url_for
+from flask.helpers import flash, url_for
 from werkzeug.utils import redirect
 from models import *
 import pandas as pd
@@ -18,19 +17,6 @@ app.secret_key = "any random string"
 
 with app.app_context():
     db.create_all()
-
-# @app.route("/")
-# def index():
-#     df = pd.read_csv('books.csv', index_col='isbn')
-#     for ind in df.index:
-#         try:
-#             b = Bookdetails(id=ind,title=df['title'][ind],author=df['author'][ind],year=str(df['year'][ind]))
-#             db.session.add(b)
-#         except Exception as e:
-#             print("pandas ind",e)
-#     db.session.commit()
-#     user = Bookdetails.query.all()
-#     return render_template("user.html",users=user)
 
 @app.route("/home", methods = ["POST","GET"])
 def home():
@@ -101,3 +87,127 @@ def book():
     else:
         return redirect('home')
 
+@app.route("/book/details/<id>",methods=['POST','GET'])
+def get_book_details(id):
+    det = Bookdetails.query.filter(Bookdetails.id==id).all()
+    total_reviews = reviews.query.filter(reviews.bookId==id).all()
+    session['bookid'] = id
+    flag_review = False
+    book_del = True
+    if 'username' in session:
+        user = session['username']
+        try:
+            rev = reviews.query.filter(and_(reviews.bookId==id,reviews.uname==user)).first()
+            if rev.uname != None:
+                flag_review = False
+        except Exception as e:
+            print("exception while clicked on id = ",e)
+            flag_review = True
+
+        try:
+            s = shelf.query.filter(and_(shelf.bookId==id, shelf.uname==user)).first()
+            if s.bookId != None:
+                book_del = False
+        except:
+            book_del = True
+
+    
+        return render_template('details.html',reviews=total_reviews,user=user,flag_review=flag_review,flag=False,details=det,book_del = book_del)
+    else:
+        return render_template('details.html',reviews=total_reviews,flag_review=flag_review,flag=True,details=det,book_del = book_del)
+
+
+@app.route("/review", methods=['POST','GET'])
+def review():
+    if request.method == 'GET':
+        return render_template('details.html')
+    else:
+        review = request.form.get('review')
+        rating = request.form.get('rating')
+        user = session['username']
+        bookid = session['bookid']
+        print("from /review , user= ",user," book = ",bookid)
+        r = reviews(bookId=bookid,uname=user,review=review,rating=int(rating))
+        db.session.add(r)
+        db.session.commit()
+        book_del= True
+        try:
+            s = shelf.query.filter(and_(shelf.bookId==id, shelf.uname==user)).first()
+            if s.bookId != None:
+                book_del = False
+        except:
+            book_del = True
+        det = Bookdetails.query.filter(Bookdetails.id==bookid).all()
+        total_reviews = reviews.query.filter(reviews.bookId==bookid).all()
+        return render_template('details.html', reviews=total_reviews, flag_review=False, user=user, flag=False, details=det,book_del=book_del)
+
+@app.route('/shelfsubmit', methods=['POST','GET'])
+def shelfsubmit():
+    if request.method == 'GET':
+        return redirect('home')
+    else:
+        bookid = session['bookid']
+        det = Bookdetails.query.filter(Bookdetails.id==bookid).all()
+        total_reviews = reviews.query.filter(reviews.bookId==bookid).all()
+        book_del = True
+        flag_review = False
+        if 'username' in session:
+            count = request.form.get('shelf')
+            user = session['username']
+            
+            try:
+                s = shelf.query.filter(and_(shelf.bookId==bookid, shelf.uname==user)).delete()
+                db.session.commit()
+                print("*****",s,type(s))
+                if s == 0:
+                    print(s.uname)
+                # print("shelf submit files = ",s.uname,s.bookId)
+                flash("Book is removed from the shelf")
+                book_del = True
+            except Exception as e:
+                print("exception from shelf submit = ",e)
+                s = shelf(bookId=bookid, uname=user, bookCount=count)
+                db.session.add(s)
+                db.session.commit()
+                book_del = False
+                flash("Book is added into Shelf")
+                
+            try:
+                rev = reviews.query.filter(and_(reviews.bookId==bookid,reviews.uname==user)).first()
+                if rev.uname != None:
+                    flag_review = False
+            except Exception as e:
+                print("exception while clicked on id = ",e)
+                flag_review = True
+            
+            return render_template('details.html',reviews=total_reviews,user=user,flag_review=flag_review,flag=False,details=det,book_del = book_del)
+            # return render_template('index.html', form=form)
+
+        else:
+            flash("Please login or register to add the book")
+            return render_template('details.html',reviews=total_reviews,flag_review=flag_review,flag=True,details=det,book_del = book_del)
+
+@app.route("/shelfpage",methods=['POST','GET'])
+def shelfpage():
+    if 'username' in session:
+        user = session['username']
+        try:
+            books = shelf.query.filter(shelf.uname==user).all()
+            user = session['username']
+            shelfbooks = []
+            for book in books:
+                bookid=book.bookId
+                det = Bookdetails.query.filter(Bookdetails.id==bookid).all()
+                shelfbooks.append(det)
+
+            # print("shelfbooks = ",shelfbooks)
+            return render_template("shelf.html",books=shelfbooks,flag=False,user=user)
+        except:
+            return render_template('shelf.html',msg=True)
+    else:
+        pass
+
+@app.route("/admin")
+def admin():
+    user = Bookdetails.query.all()
+    return render_template("user.html",users=user)

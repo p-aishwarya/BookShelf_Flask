@@ -1,23 +1,25 @@
+<!DOCTYPE html>
 <html>
     <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     </head>
-
     <body>
-        {%if flag%}
-        <h1><a href="{{url_for('register')}}">{{uname}}</a></h1>
-        <h1><a href="{{url_for('logout')}}">logout</a></h1>
+        <div class="topnav">
+            <a class="active" href="#home">Home</a>
+            {% if flag%}
+            <a href="{{ url_for ('register')}}"> {{uname}}</a>
+            <a href="{{ url_for ('logout')}}"> logout</a>
+            {%else%}
+            <a href="{{ url_for ('register')}}"> Register</a>
+            <a href="{{ url_for ('register')}}"> Login</a>
+            {%endif%}
+        </div>
+        
 
-        {%else%}
-        <h1><a href="{{url_for('register')}}">Register</a></h1>
-        <h1><a href="{{url_for('register')}}">Login</a></h1>
-
-        {%endif%}
-    </body>
-
-    <form class="example" action="{{url_for('register')}}" method='POST'>
+        <!-- The form -->
+        <form class="example" action="{{url_for('register')}}" method='POST'>
         <input type="text" placeholder="Search.." name="search">
         <button type="submit"><i class="fa fa-search"></i></button>
         </form>
-
+    </body>
 </html>
