@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request
+from flask import Flask, render_template,request,jsonify
 from flask.globals import session
 from flask.helpers import flash, url_for
 from werkzeug.utils import redirect
@@ -9,7 +9,7 @@ from operator import and_
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://wddkoosrokkkvx:6f57bbd8bb669eb06c9f1d8dd59546e008938cadf5b8dda97474f120170fd56e@ec2-3-233-100-43.compute-1.amazonaws.com:5432/ddmue56io1262'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://gvbhuwtbvlbaky:b846d16af3e74b7b7782777b2489f647e59c45c8164d91f1d011773f08b37101@ec2-3-233-100-43.compute-1.amazonaws.com:5432/dfgjco1sf9ki1a'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -18,7 +18,19 @@ app.secret_key = "any random string"
 with app.app_context():
     db.create_all()
 
-@app.route("/home", methods = ["POST","GET"])
+# @app.route("/")
+# def index():
+#     df = pd.read_csv('books.csv', index_col='isbn')
+#     for ind in df.index:
+#         try:
+#             b = Bookdetails(id=ind,title=df['title'][ind],author=df['author'][ind],year=str(df['year'][ind]))
+#             db.session.add(b)
+#         except Exception as e:
+#             print("pandas ind",e)
+#     db.session.commit()
+#     user = Bookdetails.query.all()
+#     return render_template("users.html",users=user)
+@app.route("/home",methods=["POST","GET"])
 def home():
     flag = True
     if 'username' in session:
@@ -26,27 +38,27 @@ def home():
         flag = False
         return render_template("home.html",user = username,flag = flag)
 
-    return render_template("home.html",flag=flag)
+    return render_template("home.html",flag = flag)
 
-@app.route("/register", methods = ["POST","GET"])
+@app.route("/register",methods=["POST","GET"])
 def register():
-    if request.method == "GET":
-        return render_template("register.html", flag=False)
-
+    if request.method=="GET":
+        return render_template("register.html",flag=False)
     else:
         try:
-            email = request.form.get("email")
-            # session['username']=email
-            pwd = request.form.get("psw")
-            repeatpwd = request.form.get("psw-repeat")
-            u = Users(email=email,pwd=pwd, repeat=repeatpwd)
+            email_id=request.form.get("email")
+            # session['username']=email_id
+            password=request.form.get("psw")
+            repeatpassword=request.form.get("psw-repeat")
+            u=Users(email=email_id,pwd=password,repeatpwd=repeatpassword)
             db.session.add(u)
             db.session.commit()
-            # user=Users.query.all()
+            # result=Users.query.all()
             return render_template("login.html")
         except:
-            return render_template("register.html", flag=True)
+            return render_template("register.html",flag=True)
 
+        # return f" Great {email_id} Registration process is completed!!"
 @app.route('/login', methods = ['POST', 'GET'])
 def login():
     if request.method == 'GET':
@@ -65,25 +77,35 @@ def login():
             print("exception in login page",e)
             return render_template("login.html",flag=True)
 
-@app.route("/logout", methods = ["POST","GET"])
+@app.route("/logout",methods=["POST","GET"])
 def logout():
     session.pop('username',None)
-
     return redirect('home')
-
 @app.route("/book", methods=["POST","GET"])
 def book():
     if request.method == "POST":
-        det = request.form.get("bookvalue")
+        det = request.form['bookform_data']
+        print(det)
         tag = '%'+det+'%'
         book1 = Bookdetails.query.filter(Bookdetails.id.ilike(tag)).all()
         book2 = Bookdetails.query.filter(Bookdetails.title.ilike(tag)).all()
         book3 = Bookdetails.query.filter(Bookdetails.author.ilike(tag)).all()
         book4 = Bookdetails.query.filter(Bookdetails.year.ilike(tag)).all()
-        book = book1+book2+book3+book4
-        username = session['username']
-        flag = False
-        return render_template("home.html",user = username,flag = flag,books=book)
+        books = book1+book2+book3+book4
+        books_dict=[]
+        for each in books:
+            context = {'isbn':each.id, 'Title':each.title,'Author':each.author, 'Year':each.year}
+            # print(context)
+            books_dict.append(context)
+            context={}
+
+        return jsonify(books_dict)
+        # if "username" in session:
+        #     username = session['username']
+        #     flag = False
+        #     return render_template("home.html",user = username,flag = flag,books=book)
+        # else:
+        #     return render_template("home.html",flag = True,books=book)
     else:
         return redirect('home')
 
